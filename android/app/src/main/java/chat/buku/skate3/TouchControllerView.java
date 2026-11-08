@@ -42,6 +42,7 @@ public final class TouchControllerView extends View {
     private final SparseArray<Control> pointers = new SparseArray<>();
     private final SharedPreferences preferences;
     private boolean controlsVisible;
+    private boolean toggleHidden;
     private RectF toggle = new RectF();
     private float lastWidth;
     private float lastHeight;
@@ -77,7 +78,27 @@ public final class TouchControllerView extends View {
     public void disconnect() {
         for (Control control : controls) control.release();
         pointers.clear();
-        TouchControllerBridge.trySetState(-1, 0, 0, 0, 0, 0, 0);
+        TouchControllerBridge.setOverlayState(-1, 0, 0, 0, 0, 0, 0);
+    }
+
+    /**
+     * Hides the small TOUCH/HIDE button on the game screen. The bottom-screen
+     * panel does this while it offers the same toggle, so a handheld with
+     * real controls does not keep a stray button over the game.
+     */
+    public void setToggleHidden(boolean hidden) {
+        if (toggleHidden == hidden) return;
+        toggleHidden = hidden;
+        invalidate();
+    }
+
+    public boolean areControlsVisible() {
+        return controlsVisible;
+    }
+
+    /** Shows or hides the touch controls from outside the view (the panel). */
+    public void showControls(boolean visible) {
+        if (controlsVisible != visible) setControlsVisible(visible);
     }
 
     @Override
@@ -151,7 +172,7 @@ public final class TouchControllerView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        drawToggle(canvas);
+        if (!toggleHidden) drawToggle(canvas);
         if (!controlsVisible) return;
         for (Control control : controls) control.draw(canvas);
     }
@@ -174,7 +195,7 @@ public final class TouchControllerView extends View {
         float y = event.getY(index);
 
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
-            if (toggle.contains(x, y)) {
+            if (!toggleHidden && toggle.contains(x, y)) {
                 setControlsVisible(!controlsVisible);
                 return true;
             }
@@ -237,12 +258,12 @@ public final class TouchControllerView extends View {
 
     private void sendState() {
         if (!controlsVisible) {
-            TouchControllerBridge.trySetState(-1, 0, 0, 0, 0, 0, 0);
+            TouchControllerBridge.setOverlayState(-1, 0, 0, 0, 0, 0, 0);
             return;
         }
         int buttons = 0;
         for (Control control : controls) buttons |= control.buttons();
-        TouchControllerBridge.trySetState(
+        TouchControllerBridge.setOverlayState(
             buttons,
             leftStick == null ? 0 : leftStick.xValue,
             leftStick == null ? 0 : leftStick.yValue,

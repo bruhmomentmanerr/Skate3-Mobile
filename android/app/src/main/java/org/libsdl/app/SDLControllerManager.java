@@ -46,6 +46,19 @@ public class SDLControllerManager
 
     private static final String TAG = "SDLControllerManager";
 
+    // Skate 3 Mobile: southpaw controller preset. When set, the first two
+    // joystick axes (left stick in SDL's default Android mapping) and the next
+    // two (right stick) trade values before they reach native code.
+    private static volatile boolean sSwapSticks;
+
+    static public void setSwapSticks(boolean swap) {
+        sSwapSticks = swap;
+    }
+
+    static boolean swapSticks() {
+        return sSwapSticks;
+    }
+
     static void initialize() {
         if (mJoystickHandler == null) {
             mJoystickHandler = new SDLJoystickHandler();
@@ -327,8 +340,13 @@ class SDLJoystickHandler {
         if (action == MotionEvent.ACTION_MOVE) {
             SDLJoystick joystick = getJoystick(event.getDeviceId());
             if (joystick != null) {
-                for (int i = 0; i < joystick.axes.size(); i++) {
-                    InputDevice.MotionRange range = joystick.axes.get(i);
+                int axisCount = joystick.axes.size();
+                boolean swapSticks = axisCount >= 4 && SDLControllerManager.swapSticks();
+                for (int i = 0; i < axisCount; i++) {
+                    // Southpaw preset: slots 0/1 (left stick) read from 2/3
+                    // (right stick) and vice versa. Triggers are untouched.
+                    int source = (swapSticks && i < 4) ? (i ^ 2) : i;
+                    InputDevice.MotionRange range = joystick.axes.get(source);
                     /* Normalize the value to -1...1 */
                     float value = (event.getAxisValue(range.getAxis(), actionPointerIndex) - range.getMin()) / range.getRange() * 2.0f - 1.0f;
                     SDLControllerManager.onNativeJoy(joystick.device_id, i, value);

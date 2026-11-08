@@ -130,9 +130,54 @@ REXCVAR_DEFINE_INT32(
     "pipeline). Applied after restart.")
     .range(0, 1)
     .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
+REXCVAR_DEFINE_INT32(
+    skate3_android_scene_tier, 0, "Skate 3",
+    "Scene target tier within the High-End / Quality profile: 0 = full "
+    "720-line target, 1 = Balanced 540-line target with lighter effects. Set "
+    "at startup from the launcher's HANDHELD SETUP graphics preset.")
+    .range(0, 1)
+    .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
 #endif
 
 namespace {
+
+#if defined(__ANDROID__)
+std::string EnvString(const char* name) {
+  const char* value = std::getenv(name);
+  return value != nullptr ? std::string(value) : std::string();
+}
+
+// Graphics preset from the launcher's HANDHELD SETUP screen, applied after
+// saved settings load so an explicit launcher choice is authoritative:
+//   auto        keep the RB + Start Device Profile. Use the 540-line tier
+//               only when the device table recommends Balanced and the
+//               profile is High-End.
+//   performance force the RG406V / Performance profile.
+//   balanced    force High-End at the 540-line tier.
+//   quality     force High-End at the full 720-line tier.
+// Returns the scene tier to use.
+int32_t ApplyAndroidGraphicsPreset() {
+  const std::string preset = EnvString("SKATE3_GRAPHICS_PRESET");
+  const std::string recommended = EnvString("SKATE3_GRAPHICS_RECOMMENDED");
+  int32_t tier = 0;
+  if (preset == "performance") {
+    rex::cvar::SetFlagByName("skate3_android_quality_profile", "0");
+  } else if (preset == "balanced") {
+    rex::cvar::SetFlagByName("skate3_android_quality_profile", "1");
+    tier = 1;
+  } else if (preset == "quality") {
+    rex::cvar::SetFlagByName("skate3_android_quality_profile", "1");
+  } else if (recommended == "balanced" &&
+             rex::cvar::Query<int32_t>("skate3_android_quality_profile") == 1) {
+    tier = 1;
+  }
+  rex::cvar::SetFlagByName("skate3_android_scene_tier", std::to_string(tier));
+  REXLOG_INFO("Handheld graphics preset: {} (device {}, recommended {}) -> scene tier {}",
+              preset.empty() ? "auto" : preset, EnvString("SKATE3_DEVICE_LABEL"),
+              recommended.empty() ? "none" : recommended, tier);
+  return tier;
+}
+#endif
 
 void ApplyDemoPathProfileOverride() {
   if (!rex::cvar::Query<bool>("skate3_demo_path") &&
@@ -643,6 +688,18 @@ void Skate3BaseApp::OnConfigurePaths(rex::PathConfig& paths) {
       {"skate3_native_render_scene_perf_interval", "300"},
       {"show_fps_counter", "true"},
   };
+  // Balanced keeps the High-End material pipeline but renders the scene at
+  // 540 lines (see EnsureOutputSizedTargets) and trims the effects that cost
+  // the most heat for the least visible gain on a 6-inch screen.
+  constexpr std::pair<std::string_view, std::string_view> kBalancedPreset[] = {
+      {"skate3_draw_distance_scale", "0.8"},
+      {"skate3_lod_distance_scale", "0.8"},
+      {"skate3_native_render_scene_msaa", "1"},
+      {"skate3_native_render_scene_ssao", "false"},
+      {"skate3_native_render_scene_shafts", "false"},
+      {"skate3_native_render_scene_shadow_pcss", "false"},
+  };
+  const int32_t scene_tier = ApplyAndroidGraphicsPreset();
   const int32_t android_profile =
       std::clamp(rex::cvar::Query<int32_t>("skate3_android_quality_profile"), 0, 1);
   const auto apply_profile = [](const auto& profile) {
@@ -655,6 +712,12 @@ void Skate3BaseApp::OnConfigurePaths(rex::PathConfig& paths) {
     REXLOG_INFO(
         "Android device profile: RG406V / Performance (512x288, 0.5x "
         "world/LOD, simplified materials)");
+  } else if (scene_tier == 1) {
+    rex::cvar::SetFlagByName("skate3_native_render_scene_handheld_potato", "false");
+    apply_profile(kBalancedPreset);
+    REXLOG_INFO(
+        "Android device profile: High-End / Balanced (960x540, regular materials, 0.8x "
+        "world/LOD, no SSAO or light shafts)");
   } else {
     rex::cvar::SetFlagByName("skate3_native_render_scene_handheld_potato", "false");
     REXLOG_INFO("Android device profile: High-End / Quality (1280x720, regular materials, saved settings)");

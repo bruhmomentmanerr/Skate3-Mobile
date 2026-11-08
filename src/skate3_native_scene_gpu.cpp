@@ -145,6 +145,7 @@ REXCVAR_DECLARE(bool, skate3_native_render_scene_ssao_full_res);
 REXCVAR_DECLARE(bool, skate3_native_render_scene_ssr);
 #if REX_PLATFORM_ANDROID
 REXCVAR_DECLARE(int32_t, skate3_android_quality_profile);
+REXCVAR_DECLARE(int32_t, skate3_android_scene_tier);
 #endif
 REXCVAR_DECLARE(bool, skate3_native_render_scene_tex_mips);
 REXCVAR_DECLARE(bool, skate3_native_render_scene_tex_revalidate);
@@ -4625,11 +4626,14 @@ bool EnsureOutputSizedTargets(const NativeGuestOutputRenderContext& context) {
   // Keep the 3D target proportional to the selected native output shape.
   // The RG406V profile retains its 288-line low-power budget (384x288 at
   // 4:3); the high-end profile renders at the full 720-line output
-  // (960x720 at 4:3).
+  // (960x720 at 4:3). The Balanced tier of the high-end profile sits between
+  // them at 540 lines (960x540, or 720x540 at 4:3).
   const bool high_end_profile =
       std::clamp(REXCVAR_GET(skate3_android_quality_profile), 0, 1) == 1;
-  const uint32_t width_cap = high_end_profile ? 1280u : 512u;
-  const uint32_t height_cap = high_end_profile ? 720u : 288u;
+  const bool balanced_tier =
+      high_end_profile && std::clamp(REXCVAR_GET(skate3_android_scene_tier), 0, 1) == 1;
+  const uint32_t width_cap = balanced_tier ? 960u : high_end_profile ? 1280u : 512u;
+  const uint32_t height_cap = balanced_tier ? 540u : high_end_profile ? 720u : 288u;
   uint32_t height = std::min(context.guest_output_height, height_cap);
   uint32_t width = uint32_t((uint64_t(height) * context.guest_output_width +
                              context.guest_output_height / 2) /

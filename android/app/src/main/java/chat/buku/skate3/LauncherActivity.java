@@ -71,6 +71,7 @@ public class LauncherActivity extends Activity {
     private ProgressBar progressBar;
     private Button languageButton;
     private Button primaryButton;
+    private Button handheldButton;
     private Button characterButton;
     private Button submitModButton;
     private Button gpuDriverButton;
@@ -188,6 +189,7 @@ public class LauncherActivity extends Activity {
         content.addView(progressBar, matchFixed(dp(10), dp(18)));
 
         primaryButton = actionButton(true);
+        handheldButton = actionButton(false);
         characterButton = actionButton(false);
         submitModButton = actionButton(false);
         gpuDriverButton = actionButton(false);
@@ -196,6 +198,8 @@ public class LauncherActivity extends Activity {
         updateButton = actionButton(false);
         reportButton = actionButton(false);
         content.addView(primaryButton, matchFixed(dp(58), dp(10)));
+        content.addView(handheldButton, matchFixed(dp(54), dp(10)));
+        hide(handheldButton);
         content.addView(characterButton, matchFixed(dp(54), dp(10)));
         content.addView(submitModButton, matchFixed(dp(54), dp(10)));
         setButton(submitModButton, "SUBMIT A MOD", view -> openModSubmission(), false);
@@ -248,6 +252,7 @@ public class LauncherActivity extends Activity {
             setLocalizedText(statusText, "DEVICE NOT SUPPORTED");
             setLocalizedText(detailText, unsupported);
             setButton(primaryButton, "CLOSE", view -> finish(), true);
+            hide(handheldButton);
             hide(characterButton);
             hide(gpuDriverButton);
             hide(secondaryButton);
@@ -263,6 +268,7 @@ public class LauncherActivity extends Activity {
             setLocalizedText(statusText, "READY TO SKATE");
             setLocalizedText(detailText, Build.MODEL + "\nGame files: " + activeGame.getAbsolutePath());
             setButton(primaryButton, "PLAY SKATE 3", view -> launchGame(), true);
+            setButton(handheldButton, "HANDHELD SETUP", view -> showHandheldSetup(), false);
             configureSeiyuInstallButton(activeGame);
             configureAdvancedButton();
             if (scopedReady) {
@@ -278,6 +284,7 @@ public class LauncherActivity extends Activity {
             setLocalizedText(statusText, "GAME EXTRACTED");
             setLocalizedText(detailText, "Finish by downloading the verified 1.7 MB Title Update 3, or select the package yourself.");
             setButton(primaryButton, "FINISH SETUP AUTOMATICALLY", view -> finishSetupOnline(), true);
+            hide(handheldButton);
             hide(characterButton);
             hide(gpuDriverButton);
             setButton(secondaryButton, "SELECT TITLE UPDATE FILE", view -> pickTitleUpdate(), false);
@@ -290,6 +297,7 @@ public class LauncherActivity extends Activity {
             "Select your Skate 3 Xbox 360 ISO. It can be in Downloads, on an SD card, or on a connected USB drive.\n\nFree space: " +
             humanBytes(new StatFs(storageRoot.getAbsolutePath()).getAvailableBytes()));
         setButton(primaryButton, "SELECT MY SKATE 3 ISO", view -> pickIso(), true);
+        hide(handheldButton);
         hide(characterButton);
         hide(gpuDriverButton);
         hide(secondaryButton);
@@ -682,6 +690,94 @@ public class LauncherActivity extends Activity {
                                     cleanMessage(exception), exception);
             }
         });
+    }
+
+    /**
+     * Graphics preset, controller layout and bottom-screen panel choices.
+     * Built as a custom panel of buttons rather than setItems(), for the same
+     * vendor-theme reasons as the GPU driver menu, and so it works with the
+     * built-in controls on handhelds.
+     */
+    private void showHandheldSetup() {
+        DeviceProfiles.Recommendation device = DeviceProfiles.current();
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(22), dp(8), dp(22), dp(6));
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(panel, new ScrollView.LayoutParams(
+            ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
+
+        String recommendation = device.tier == null
+            ? localize("No device-specific recommendation; Auto keeps the memory-based default.")
+            : localize("Auto picks") + ": " + localize(graphicsForTier(device.tier).label);
+        TextView description = text(
+            localize("Detected device") + ": " + device.label + "\n" + recommendation + "\n\n" +
+            localize("Graphics presets take effect the next time you press PLAY SKATE 3. Controller layouts apply immediately and can also be changed from the bottom screen while playing."),
+            14, Color.rgb(205, 205, 210));
+        description.setLineSpacing(0, 1.12f);
+        panel.addView(description, matchWrap(dp(16)));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setTitle(localize("Handheld setup"))
+            .setView(scroll)
+            .setNegativeButton(localize("Close"), null)
+            .create();
+
+        panel.addView(sectionLabel("GRAPHICS PRESET"), matchWrap(dp(8)));
+        HandheldSettings.Graphics graphics = HandheldSettings.graphics(this);
+        for (HandheldSettings.Graphics choice : HandheldSettings.Graphics.values()) {
+            panel.addView(choiceButton(choice.label, choice == graphics, view -> {
+                HandheldSettings.setGraphics(this, choice);
+                dialog.dismiss();
+                showHandheldSetup();
+            }), matchFixed(dp(50), dp(6)));
+        }
+
+        panel.addView(sectionLabel("CONTROLLER LAYOUT"), matchWrap(dp(8)));
+        ControllerPresets.Preset controller = HandheldSettings.controller(this);
+        for (ControllerPresets.Preset choice : ControllerPresets.Preset.values()) {
+            panel.addView(choiceButton(choice.label, choice == controller, view -> {
+                HandheldSettings.setController(this, choice);
+                dialog.dismiss();
+                showHandheldSetup();
+            }), matchFixed(dp(50), dp(6)));
+        }
+        TextView controllerHelp = text(controller.description, 13, Color.rgb(160, 160, 168));
+        panel.addView(controllerHelp, matchWrap(dp(16)));
+
+        panel.addView(sectionLabel("BOTTOM SCREEN PANEL"), matchWrap(dp(8)));
+        HandheldSettings.Panel bottom = HandheldSettings.panel(this);
+        for (HandheldSettings.Panel choice : HandheldSettings.Panel.values()) {
+            panel.addView(choiceButton(choice.label, choice == bottom, view -> {
+                HandheldSettings.setPanel(this, choice);
+                dialog.dismiss();
+                showHandheldSetup();
+            }), matchFixed(dp(50), dp(6)));
+        }
+
+        dialog.show();
+    }
+
+    private static HandheldSettings.Graphics graphicsForTier(DeviceProfiles.Tier tier) {
+        switch (tier) {
+            case PERFORMANCE: return HandheldSettings.Graphics.PERFORMANCE;
+            case BALANCED: return HandheldSettings.Graphics.BALANCED;
+            default: return HandheldSettings.Graphics.QUALITY;
+        }
+    }
+
+    private TextView sectionLabel(String english) {
+        TextView label = text(english, 13, Color.rgb(255, 104, 24));
+        label.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        label.setPadding(0, dp(6), 0, 0);
+        return label;
+    }
+
+    private Button choiceButton(String english, boolean selected, View.OnClickListener listener) {
+        Button button = actionButton(selected);
+        String label = localize(english) + (selected ? "  •  " + localize("SELECTED") : "");
+        setButton(button, label, listener, selected);
+        return button;
     }
 
     private void configureAdvancedButton() {
@@ -1402,6 +1498,7 @@ public class LauncherActivity extends Activity {
     private void setButtonsEnabled(boolean enabled) {
         languageButton.setEnabled(enabled);
         primaryButton.setEnabled(enabled);
+        handheldButton.setEnabled(enabled);
         characterButton.setEnabled(enabled);
         submitModButton.setEnabled(enabled);
         gpuDriverButton.setEnabled(enabled);

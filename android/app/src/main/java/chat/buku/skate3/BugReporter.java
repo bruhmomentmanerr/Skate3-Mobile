@@ -90,6 +90,8 @@ final class BugReporter {
             "Vulkan feature: " + vulkan + "\n" +
             "Java heap limit: " + availableMb + " MiB\n" +
             "Graphics profile: " + profile + "\n" +
+            "Handheld setup: " + HandheldSettings.describe(context) +
+                " (auto recommends " + autoRecommendation() + ")\n" +
             "GPU driver: " + gpuDriver + "\n" +
             "Input: " + input + "\n" +
             "Recent process exits:\n" + exits + "\n\n" +
@@ -125,6 +127,11 @@ final class BugReporter {
           }
         }
         return "Not explicitly saved (app default: Performance)";
+    }
+
+    private static String autoRecommendation() {
+        DeviceProfiles.Recommendation device = DeviceProfiles.current();
+        return device.tier == null ? "memory default" : device.nativeId();
     }
 
     private static String inputMethod() {

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "sections": [
+    {
+      "title": "BOARD CONTROL",
+      "rows": [
+        ["Left stick", "Steer and lean. With the Southpaw preset, the sticks trade jobs."],
+        ["Right stick", "Flick-It: every pop, flip and shove-it starts here."]
+      ]
+    },
+    {
+      "title": "POP",
+      "rows": [
+        ["Ollie", "Pull the right stick down, then flick it straight up."],
+        ["Nollie", "Push the right stick up, then flick it straight down."]
+      ]
+    },
+    {
+      "title": "FLIPS AND SHOVE-ITS",
+      "rows": [
+        ["Kickflip / heelflip", "Pull down, then flick diagonally up. Left or right picks which flip, and it mirrors with your stance."],
+        ["Shove-it", "Pull down, then flick sideways. The direction sets the spin."]
+      ]
+    },
+    {
+      "title": "GRABS",
+      "rows": [
+        ["Grab", "In the air, hold LT or RT (left or right hand), then move the right stick to choose the grab."]
+      ]
+    }
+  ],
+  "footer": "Directions depend on stance (regular or goofy), so check them in game. To fix or extend this list, edit android/app/src/main/assets/panel/tricks.json and rebuild."
+}

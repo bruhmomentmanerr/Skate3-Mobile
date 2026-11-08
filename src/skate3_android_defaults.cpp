@@ -2,6 +2,7 @@
 #if defined(__ANDROID__)
 #include <sys/sysinfo.h>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <map>
 #include <string>
@@ -106,6 +107,22 @@ std::string AndroidThreadPlacement() {
       ",nice:5;presence_thread=" + s + ",nice:10";
 }
 
+// Starting Device Profile, before saved settings load (so the RB + Start menu
+// still wins). The launcher passes its device table's recommendation in
+// SKATE3_GRAPHICS_RECOMMENDED; an empty value means the device is unknown and
+// the old memory rule decides. Low-memory devices stay on Performance whatever
+// the table says, because memory, not the GPU, is what limits them.
+int AndroidDefaultQualityProfile() {
+  if (AndroidIsLowEnd()) {
+    return 0;
+  }
+  const char* recommended = std::getenv("SKATE3_GRAPHICS_RECOMMENDED");
+  if (recommended != nullptr && std::string_view(recommended) == "performance") {
+    return 0;
+  }
+  return 1;
+}
+
 AndroidStoreBudgets PickAndroidStoreBudgets() {
   const uint64_t total_mb = AndroidTotalRamMb();
   AndroidStoreBudgets b;
@@ -187,6 +204,7 @@ void ApplySkate3AndroidDefaults() {
   rex::cvar::SetFlagByName("skate3_native_render_scene_tex_store_mb", std::to_string(budgets.tex_mb));
   rex::cvar::SetFlagByName("skate3_native_render_scene_mesh_store_mb", std::to_string(budgets.mesh_mb));
   rex::cvar::SetFlagByName("android_thread_placement_map", AndroidThreadPlacement());
-  rex::cvar::SetFlagByName("skate3_android_quality_profile", AndroidIsLowEnd() ? "0" : "1");
+  rex::cvar::SetFlagByName("skate3_android_quality_profile",
+                           std::to_string(AndroidDefaultQualityProfile()));
 #endif
 }

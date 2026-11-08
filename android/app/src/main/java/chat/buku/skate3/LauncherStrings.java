@@ -116,6 +116,61 @@ final class LauncherStrings {
         put("Open GitHub", "Abrir GitHub");
         put("Device diagnostics copied.", "Diagnóstico do dispositivo copiado.");
         put("No browser is available. The diagnostics are copied.", "Nenhum navegador está disponível. O diagnóstico foi copiado.");
+
+        // Handheld setup (launcher) and the bottom-screen panel.
+        put("HANDHELD SETUP", "CONFIGURAÇÃO DO PORTÁTIL");
+        put("Handheld setup", "Configuração do portátil");
+        put("GRAPHICS PRESET", "PREDEFINIÇÃO GRÁFICA");
+        put("CONTROLLER LAYOUT", "LAYOUT DO CONTROLE");
+        put("BOTTOM SCREEN PANEL", "PAINEL DA TELA INFERIOR");
+        put("Detected device", "Dispositivo detectado");
+        put("Graphics presets take effect the next time you press PLAY SKATE 3. Controller layouts apply immediately and can also be changed from the bottom screen while playing.",
+            "As predefinições gráficas passam a valer na próxima vez que você tocar em JOGAR SKATE 3. Os layouts de controle são aplicados na hora e também podem ser alterados pela tela inferior durante o jogo.");
+        put("Auto (recommended for this device)", "Automático (recomendado para este dispositivo)");
+        put("Performance (288p, coolest)", "Desempenho (288p, mais frio)");
+        put("Balanced (540p, cooler than Quality)", "Equilibrado (540p, mais frio que Qualidade)");
+        put("Quality (720p, full materials)", "Qualidade (720p, materiais completos)");
+        put("Auto (dual-screen handhelds only)", "Automático (somente portáteis com duas telas)");
+        put("On whenever a second screen exists", "Ligado sempre que houver uma segunda tela");
+        put("Off", "Desligado");
+        put("Standard", "Padrão");
+        put("Nintendo-style face buttons", "Botões no estilo Nintendo");
+        put("Southpaw (sticks swapped)", "Canhoto (analógicos trocados)");
+        put("Southpaw + Nintendo-style", "Canhoto + estilo Nintendo");
+        put("Buttons and sticks exactly as labelled on an Xbox-layout pad.",
+            "Botões e analógicos exatamente como indicados em um controle no layout do Xbox.");
+        put("Swaps A with B and X with Y. Use this if your handheld is set to a Nintendo layout, or if A on your device should act as B.",
+            "Troca A com B e X com Y. Use se o seu portátil estiver no layout Nintendo ou se o A do seu dispositivo deve funcionar como B.");
+        put("The left stick does Flick-It board tricks and the right stick steers.",
+            "O analógico esquerdo faz as manobras Flick-It e o direito controla a direção.");
+        put("Swapped sticks and swapped face buttons together.",
+            "Analógicos e botões frontais trocados ao mesmo tempo.");
+        put("No device-specific recommendation; Auto keeps the memory-based default.",
+            "Sem recomendação específica para este dispositivo; o modo Automático mantém o padrão baseado na memória.");
+        put("Auto picks", "O Automático escolhe");
+        put("SELECTED", "SELECIONADO");
+        put("Close", "Fechar");
+        put("PAUSE", "PAUSAR");
+        put("RECOMP MENU", "MENU DO RECOMP");
+        put("BACK", "VOLTAR");
+        put("TRICKS", "MANOBRAS");
+        put("CONTROLS", "CONTROLES");
+        put("SETUP", "AJUSTES");
+        put("Controls", "Controles");
+        put("Graphics", "Gráficos");
+        put("The trick list could not be loaded.", "Não foi possível carregar a lista de manobras.");
+        put("Applies instantly to the built-in controls and any connected gamepad.",
+            "Aplica na hora aos controles integrados e a qualquer controle conectado.");
+        put("TOUCH CONTROLS ON GAME SCREEN", "CONTROLES DE TOQUE NA TELA DO JOGO");
+        put("TOUCH BUTTON ON GAME SCREEN", "BOTÃO TOUCH NA TELA DO JOGO");
+        put("ON", "LIGADO");
+        put("OFF", "DESLIGADO");
+        put("SHOWN", "VISÍVEL");
+        put("HIDDEN", "OCULTO");
+        put("DIM THIS SCREEN", "ESCURECER ESTA TELA");
+        put("CLOSE PANEL UNTIL NEXT LAUNCH", "FECHAR PAINEL ATÉ A PRÓXIMA ABERTURA");
+        put("Graphics changes need a restart. Change them in the launcher under HANDHELD SETUP.",
+            "Mudanças gráficas exigem reiniciar. Altere no launcher em CONFIGURAÇÃO DO PORTÁTIL.");
     }
 
     private LauncherStrings() {}
