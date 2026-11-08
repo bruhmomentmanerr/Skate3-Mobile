@@ -51,15 +51,21 @@ final class DeviceProfiles {
         String maker = clean(manufacturer);
         String name = clean(model);
         String soc = clean(socModel);
-        if (soc.isEmpty()) soc = clean(hardware);
+        boolean socFromHardware = soc.isEmpty();
+        if (socFromHardware) soc = clean(hardware);
 
         boolean thor = maker.contains("AYN") && name.contains("THOR");
         String chip = chipName(soc);
+        // Build.HARDWARE is often just a vendor ("qcom"); only name it when
+        // it is a part number this table recognises.
+        if (socFromHardware && chip != null && chip.equals(soc)) chip = null;
         Tier tier = socTier(soc);
 
         StringBuilder label = new StringBuilder();
         if (thor) {
             label.append("AYN Thor");
+        } else if (!name.isEmpty() && (maker.isEmpty() || name.startsWith(maker))) {
+            label.append(pretty(model));  // "Retroid Pocket 5", not "Retroid Retroid Pocket 5"
         } else if (!maker.isEmpty() || !name.isEmpty()) {
             label.append(pretty(manufacturer)).append(' ').append(pretty(model));
         } else {
